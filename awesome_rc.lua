@@ -1,5 +1,8 @@
 -- awesome configuration file for fread.ink
 
+-- add awesome config path to search path
+package.path = package.path .. ';/etc/awesome/?.lua'
+
 -- Standard awesome library
 local gears = require("gears")
 local awful = require("awful")
