@@ -27,7 +27,7 @@ struct mxcfb_update_data {
         uint32_t update_marker; // unique number to return when done
         uint32_t hist_bw_waveform_mode; // same as waveform_mode
         uint32_t hist_gray_waveform_mode; // same as waveform_mode
-        int temp; // TEMP_USE_AUTO
+        int temp; // TEMP_USE_PAPYRUS
         unsigned int flags;
         struct mxcfb_alt_buffer_data alt_buffer_data;
 };
@@ -51,7 +51,8 @@ local WAVEFORM_MODE_AUTO = 257 -- no idea
 local TEMP_USE_AMBIENT = 0x1000
 local TEMP_USE_PAPYRUS = 0X1001
 
-local MXCFB_SEND_UPDATE = ioctl._IOW('F', 0x2E, "struct mxcfb_update_data")
+--local MXCFB_SEND_UPDATE = ioctl._IOW('F', 0x2E, "struct mxcfb_update_data")
+local MXCFB_SEND_UPDATE = 0x4048462e
 local MXCFB_WAIT_FOR_UPDATE_COMPLETE = ioctl._IOW('F', 0x2F, "uint32_t")
 
 local mxcfb_rect = ffi.typeof("struct mxcfb_rect")
@@ -78,7 +79,6 @@ local open_framebuffer = function(fb_path)
     error("Error opening framebuffer device")
   end
   fb_dev_fd = ioctl.fileno(fb_dev)
-
   return fb_dev
 end
 
@@ -100,31 +100,32 @@ local update_partial = function(x, y, width, height)
     error("framebuffer not open")
   end
 
-  local update_data = mxcfb_update_data_pointer()
+--  local update_data = mxcfb_update_data_pointer()
+  local update_data = ffi.new("struct mxcfb_update_data[1]")
 
-  update_data[0].update_region.top = y
-  update_data[0].update_region.left = x
-  update_data[0].update_region.width = width
-  update_data[0].update_region.height = height
+  update_data[0].update_region.top = ffi.new("unsigned int", y)
+  update_data[0].update_region.left = ffi.new("unsigned int", x)
+  update_data[0].update_region.width = ffi.new("unsigned int", width)
+  update_data[0].update_region.height = ffi.new("unsigned int", height)
 
-  update_data[0].update_mode = UPDATE_MODE_PARTIAL
-  update_data[0].update_marker = 0
-  update_data[0].waveform_mode = WAVEFORM_MODE_GL16_FAST
-  update_data[0].hist_bw_waveform_mode = WAVEFORM_MODE_GL16_FAST
-  update_data[0].hist_gray_waveform_mode = WAVEFORM_MODE_GL16_FAST
-  update_data[0].temp = TEMP_USE_AMBIENT
-  update_data[0].flags = 0
+  update_data[0].update_mode = ffi.new("unsigned int", UPDATE_MODE_FULL)
+  update_data[0].update_marker = ffi.new("unsigned int", 42)
+  update_data[0].waveform_mode = ffi.new("unsigned int", WAVEFORM_MODE_DU)
+  update_data[0].hist_bw_waveform_mode = ffi.new("unsigned int", WAVEFORM_MODE_DU)
+  update_data[0].hist_gray_waveform_mode = ffi.new("unsigned int", WAVEFORM_MODE_DU)
+  update_data[0].temp = ffi.new("int", TEMP_USE_PAPYRUS)
+  update_data[0].flags = ffi.new("unsigned int", 0)
 
-  update_data[0].alt_buffer_data.phys_addr = 0
-  update_data[0].alt_buffer_data.width = 0
-  update_data[0].alt_buffer_data.height = 0
+--  update_data.alt_buffer_data.phys_addr = 0
+--  update_data.alt_buffer_data.width = 0
+--  update_data.alt_buffer_data.height = 0
 
-  update_data[0].alt_buffer_data.alt_update_region.top = 0
-  update_data[0].alt_buffer_data.alt_update_region.left = 0
-  update_data[0].alt_buffer_data.alt_update_region.width = 0
-  update_data[0].alt_buffer_data.alt_update_region.height = 0
+--  update_data.alt_buffer_data.alt_update_region.top = 0
+--  update_data.alt_buffer_data.alt_update_region.left = 0
+--  update_data.alt_buffer_data.alt_update_region.width = 0
+--  update_data.alt_buffer_data.alt_update_region.height = 0
 
-  return ioctl._ioctl(fb_dev_fd, MXCFB_SEND_UPDATE, update_data)
+  return ioctl._ioctl(ffi.new("int", fb_dev_fd), ffi.new("int", MXCFB_SEND_UPDATE), update_data)
 end
 
 -- fidelity can be:

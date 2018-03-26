@@ -8,9 +8,9 @@ if #arg >= 1 then
   filepath = arg[1]
 end
 
-local file = epaper.open(filepath)
+epaper.open(filepath)
 
-ret = epaper.update_partial(0, 0, 200, 200)
+ret = epaper.update_partial(0, 0, 400, 400)
 
 print("ioctl return value: " .. ret)
-epaper.close(file)
+epaper.close()
